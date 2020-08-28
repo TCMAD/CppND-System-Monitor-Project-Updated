@@ -35,13 +35,13 @@ string LinuxParser::OperatingSystem() {
 
 // DONE: An example of how to read data from the filesystem
 string LinuxParser::Kernel() {
-  string os, kernel;
+  string os, kernel, version;
   string line;
   std::ifstream stream(kProcDirectory + kVersionFilename);
   if (stream.is_open()) {
     std::getline(stream, line);
     std::istringstream linestream(line);
-    linestream >> os >> kernel;
+    linestream >> os >> version >> kernel;
   }
   return kernel;
 }
@@ -67,10 +67,48 @@ vector<int> LinuxParser::Pids() {
 }
 
 // TODO: Read and return the system memory utilization
-float LinuxParser::MemoryUtilization() { return 0.0; }
+float LinuxParser::MemoryUtilization() { 
+  /**
+   * @return Memoire utilisé
+   * @see Calcul mémoire https://stackoverflow.com/questions/41224738/how-to-calculate-system-memory-usage-from-proc-meminfo-like-htop/41251290#41251290
+   */
+  string info, value;
+  string line;
+  float MemUsed;
+  vector<string> values;
+  std::ifstream memfile(kProcDirectory + kMeminfoFilename); // Obternir le fichier meminfo
+  if (memfile.is_open()) {
+    /** 
+    * Obtenir les informations lignes par lignes
+    *  Les valeurs sont enregistrer sur le vecteur "Values"
+    */
+    for (std::string line; std::getline(memfile, line);) {
+      std::istringstream lineInfo(line);
+      lineInfo >> info >> value;
+      values.push_back(value);
+    }
+    float MemTotal,Memfree;
+    MemTotal = std::stof(values[0]);
+    Memfree = std::stof(values[1]);
+    MemUsed = MemTotal - Memfree;
+  }
+  return MemUsed;
+ }
 
 // TODO: Read and return the system uptime
-long LinuxParser::UpTime() { return 0; }
+long LinuxParser::UpTime(){
+  /**
+   * @return temps de fonctionnement du système (y compris en suspend) contenue dans le fichier /proc/uptime
+   */ 
+  string line, uptime;
+  std::ifstream file(kProcDirectory + kUptimeFilename); // lis le fichier
+  if(file.is_open()) {
+    std::getline(file,line); // Obtient la ligne du fichier ouvert
+    std::istringstream stream(line); // Diffuse le contenue de la ligne dans la variable stream
+    stream >> uptime; // Prend la première valeur de la ligne 
+  }
+  return std::stol(uptime); // stol => Convert into long
+}
 
 // TODO: Read and return the number of jiffies for the system
 long LinuxParser::Jiffies() { return 0; }
@@ -86,13 +124,52 @@ long LinuxParser::ActiveJiffies() { return 0; }
 long LinuxParser::IdleJiffies() { return 0; }
 
 // TODO: Read and return CPU utilization
-vector<string> LinuxParser::CpuUtilization() { return {}; }
+vector<string> LinuxParser::CpuUtilization() {
+  /** @src https://stackoverflow.com/questions/23367857/accurate-calculation-of-cpu-usage-given-in-percentage-in-linux */
+  string info, user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
+  string line;
+  std::ifstream file(kProcDirectory + kStatFilename);
+  if(file.is_open()){
+    std::getline(file,line);
+    std::istringstream stream(line);
+    stream >> info >> user >> nice >> system >> idle >> irq >> softirq >> steal >> guest >> guest_nice;
+  }
+  return {user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice}; 
+  }
 
 // TODO: Read and return the total number of processes
-int LinuxParser::TotalProcesses() { return 0; }
+int LinuxParser::TotalProcesses() { 
+  string line,info,value;
+  int TP;
+  std::ifstream file(kProcDirectory + kStatFilename); // lis le fichier
+  if(file.is_open()) {
+    for(line; std::getline(file,line);){ // Permet de lire chaque ligne du fichier
+      std::istringstream stream(line); // Diffuse
+      stream >> info >> value; 
+      if(info=="processes"){
+        TP = std::stoi(value); // stoi => Convert into int
+      }
+    }
+  }
+  return TP;
+}
 
 // TODO: Read and return the number of running processes
-int LinuxParser::RunningProcesses() { return 0; }
+int LinuxParser::RunningProcesses() { 
+  string line,info,value;
+  int RP;
+  std::ifstream file(kProcDirectory + kStatFilename); // lis le fichier
+  if(file.is_open()) {
+    for(line; std::getline(file,line);){ // Permet de lire chaque ligne du fichier
+      std::istringstream stream(line); // Diffuse
+      stream >> info >> value; 
+      if(info=="procs_running"){
+        RP = std::stoi(value); // stoi => Convert into int
+      }
+    }
+  }
+  return RP;
+}
 
 // TODO: Read and return the command associated with a process
 // REMOVE: [[maybe_unused]] once you define the function
