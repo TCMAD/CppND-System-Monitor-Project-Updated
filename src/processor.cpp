@@ -10,7 +10,7 @@ float Processor::Utilization() {
   /** @src
    * https://stackoverflow.com/questions/23367857/accurate-calculation-of-cpu-usage-given-in-percentage-in-linux
    */
-
+/* 
   // Mise à jour des valeurs précédentes
   prevuser = user;
   prevnice = nice;
@@ -23,7 +23,7 @@ float Processor::Utilization() {
 
   // Mise à jour des valeurs actuelles
   std::vector<std::string> CpuInfo = LinuxParser::CpuUtilization();
-
+  
   user = std::stoi(CpuInfo[0]);  // stoi => Convert string into int
   nice = std::stoi(CpuInfo[1]);
   system = std::stoi(CpuInfo[2]);
@@ -34,7 +34,7 @@ float Processor::Utilization() {
   steal = std::stoi(CpuInfo[7]);
   guest = std::stoi(CpuInfo[8]);
   guestnice = std::stoi(CpuInfo[9]);
-
+  
   // Incertain du calcul
   PrevIdle = previdle + previowait;
   Idle = idle + iowait;
@@ -51,4 +51,7 @@ float Processor::Utilization() {
 
   // Pourcentage CPU
   return float((totald - idled)/totald);
+   */
+
+  return (float)LinuxParser::ActiveJiffies() / LinuxParser::Jiffies();
 }
